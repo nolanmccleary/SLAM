@@ -19,7 +19,7 @@ This is exactly what a SLAM system aims to do, making it a fan-favourite among r
 
 ## Structure
 
-This document is intended to provide a semi-comprehensive overview of the main concepts behind the SLAM algorithm itself as well as a few of its key implementations. The main page will stick to strictly verbal and visual explanations of the concepts below but when appropriate will link to sub-pages that go into more detail on the underlying math behind them for those who are interested. The [Appendix](#Appendix) at the bottom of this document will contain more comprehensive documentation for the hypermasochistic.
+This document is intended to provide a semi-comprehensive overview of the main concepts behind the SLAM algorithm itself as well as a few of its key implementations. The main page will stick to strictly verbal and visual explanations of the concepts below but when appropriate will link to [sub-pages](#Sub-Pages) that go into more detail on the underlying math behind them for those who are interested. The [appendix](#Appendix) at the bottom of this document will contain more comprehensive documentation for the hypermasochistic.
 
 ## Part 0 - The Core Algorithm
 
@@ -86,6 +86,10 @@ Thankfully, Jupyter Notebooks do support LaTex. The [following document](./0-Cor
 
 ## Part 1 - Extended Kalman Filter (EKF) SLAM
 I haven't written this yet.
+
+## Sub-Pages
+[Part 0](./0-CoreAlgo/0-CoreAlgo.ipynb)
+
 
 ## Appendix
 
