@@ -60,7 +60,7 @@ This means that as we take more measurements and correct accordingly, map precis
 
 ### 0.3 - Sensor Noise
 We can't all be parrot owners. Inferior sensors are prone to noise, and as such, can induce combobulation in our measurements. Thankfully, we can work with that. Think of sensor noise as (for our intents and purposes, and due to the law of large numbers (many measurements, remember)) a normally distributed vector with a mean value of 0 i.e. it has equal chances of overestimating the distance to a landmark by a particular amount as it does by underestimating the distance by that same amount. Then, as the numer of measurements increases, we can see that the noise begins to cancel out, allowing our slammage to continue largely unimpeded. 
->[!NOTE(S)]
+>[!NOTE]
 >
 >1) If it's not intuitive why the noise distribution would approach a normal distribution over time, review the Central Limit Theorem.
 >2) When you think about it, the noise has to have a zero-mean. If it didn't, we could just shift our sensor feed readings accordingly.
