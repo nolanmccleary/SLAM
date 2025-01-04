@@ -85,7 +85,7 @@ So far very little math/probability theory has been used here. This was done for
 Thankfully, Jupyter Notebooks do support LaTex. The [following document](./0-CoreAlgo/0-CoreAlgo.ipynb) goes into greater detail on the underlying math behind  what has been covered in this section for those who are interested.
 
 ## Part 1 - Extended Kalman Filter (EKF) SLAM
-I haven't written this yet.
+I haven't finished this yet.
 
 ## Sub-Pages
 [Part 0](./0-CoreAlgo/0-CoreAlgo.ipynb)
