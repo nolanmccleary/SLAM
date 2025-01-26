@@ -37,7 +37,7 @@ The robot's progression through the map can be modelled with a Markov Process, o
 
 ### Figure 0.1.1: Bumbling of The Robot
 <p align="center">
-  <img src="./images/robobumble.jpeg" width="400">
+  <img src="./images/robobumble.jpeg" width="500">
 </p>
 
 We will now make the assumption that the primary source of error is coming from the robot's odometer/'compass' i.e. it isn't very good at internally keeping track of its displacement relative to the accuracy obtained from its external sensors e.g. LIDAR, cameras, parrot, etc.
@@ -71,7 +71,7 @@ A really useful way to think about this whole process is in the the context of a
 
 ### Figure 0.4.1: Spring Network Diagram
 <p align="center">
-  <img src="./images/slam-correlations.png" width="400">
+  <img src="./images/slam-correlations.png" width="500">
 </p>
 
 Here, the red spring thickness is directly proportional to the correlation strength between its two nodes. 
@@ -89,7 +89,7 @@ Thankfully, Jupyter Notebooks do support LaTex. The [following document](./0-Cor
 
 ## Part 1 - Extended Kalman Filter (EKF) SLAM
 
-Extended Kalman Filters use linear algebra in conjunction with probability theory in order to operate on robot state/map information in a way that drives the convergence behaviour outlined above. The main problem that EKF solves is the linearization of nonlinear behaviour functions. These behaviour functions are nonlinear because they depend on what the robot is will want to do at a given position. Linearizing these functions would be useful because then we could map position changes between two time periods with function output changes between those two time periods. Once again though, it's a pain in the ass to do this because the robot will try to do different things at different places. We do know what these functions are, however. This means that we can relate input uncertainty to output uncertainty. This is best described with the following example:
+Extended Kalman Filters use linear algebra in conjunction with probability theory in order to operate on robot state/map information in a way that drives the convergence behaviour outlined above. 
 
 
 ### 1.1 Caffeinated Dorito
@@ -101,8 +101,8 @@ Our Wandering Dorito returns with a freshly caffeinated parrot. However, due to 
 >Robo-Caffeination is not real, it's simply some arbitrary augmentation to the robot's path-planning algorithm to make it decidedly more nonlinear for the sake of absurdity (as a visual aid). I also thought the term sounded funny.
 
 
-#### 1.1.1
-The robot starts at position state x0 and with an internal physiological state of extreme robo-caffeination. Due to this internal state, the robot is afflicted with a case of medium-grade robo-anxiety. What this means is that after any observation, if any of the visible landmarks are observed to be within some given threshold distance of the robot, the robot will tweak. When the robot tweaks, it will do so by spinning 420 degrees in the counterclockwise direction (with adjustments to account for obstacles along the trajectory) and move quickly (much faster than it would normally move) away from the scene of startlage until it's time to take the next observation. If the robot does not tweak, it will follow its path planning algorithm normally. 
+
+The robot starts at position state x0 and with an internal physiological state of extreme robo-caffeination. Due to this internal state, the robot is afflicted with a case of medium-grade robo-anxiety. What this means is that after any observation, if any of the visible landmarks are observed to be within some given threshold distance of the robot, the robot will tweak. When the robot tweaks, it will do so by spinning 163.5 degrees in the counterclockwise direction (with adjustments to account for obstacles along the trajectory) and move quickly (much faster than it would normally move) away from the scene of startlage until it's time to take the next observation, upon which it will either continue to proceed normally or tweak once more depending on the observation. If the robot does not tweak, it will follow its path planning algorithm normally. 
 
 To summarize, at any given point the robot will either:
 
@@ -110,45 +110,68 @@ To summarize, at any given point the robot will either:
 2. Tweak, if at least one landmark is within threshold distance
 
 
-#### 1.1.2
+
 
 What follows from these questionable behaviour characteristics is the observation that within any given bumbling process of sufficient map complexity, the mappings between input and output deltas between those two locations will be decidedly non-uniform. To illustrate, consider the following zones:
 
 >Zone 0: Known start point, will not tweak
-
+>
 >Zone 1: All landmarks far enough away, the robot will not tweak
-
+>
 >Zone 2: Same behaviour as Zone 1
-
+>
 >Zone 3: Right next to Zone 2 but one of the landmarks crosses threshold distance, the robot will tweak. 
 
 
-The robot's path-path planning has it go to Zone 1 from Zone 0, take an observation, then go to Zone 2/3. Assume it has a 50/50 chance of ending up in either. Now we will ask the following question: Can we recursively predict the current state as a function of the last state? In other words, can we effectively map changes in state between the last two state vectors to changes in the next state estimates?
+### Figure 1.1.1: Conundrum of the Caffeinated Dorito
+<p align="center">
+  <img src="./images/DoritoDan.png" width=700>
+</p>
 
->[!NOTE]
-> 
-> State estimates refer to estimated state after the next 'jump' occurs but before the following observation (time-update step)
 
-The first state is easy. State 1 is a function of x0, and even if x0 was a distribution we'd get a pretty well-centered distribution for state x1, which would lie inside Zone 1. Zones 2 and 3 are also easy to find as a function of Zone 1. The problem with 2 and 3 is that the next state estimates are totally different. It's not like if you move over a little bit from Zone 2 to Zone 3 the output is also shifted by the same nudge vector, it's completely different. This is problematic, because over a walk (bumbling) of sufficient complexity, there can be cases where the robot may end up in a given position due to two different processes. One with lots of tweakage, one with little tweakage. This means that the current state may no longer encode which path the robot took to get there, thus the Markov property is violated. If the Markov property is violated, recursive state estimation is no longer possible, and our algorithm fails.
 
-This is a problem indeed, and we now have a rationalization for why we'd want an EKF.
+
+The robot's path-path planning has it go to Zone 1 from Zone 0, take an observation, then go to Zone 2 or 3. The whole model is probabilistic, so assume it has a 50/50 chance of ending up in either Zone 2 or Zone 3 depending on where exactly it was in Zone 1 before. Now we will think about the transitions in terms of forecast (time update) state uncertainty.
+
+The first state is easy. State 1 is a function of x0, and even if x0 was a distribution, we'd get a pretty well-centered distribution for state x1, which would lie inside Zone 1. Zones 2 and 3 are also easy to find as a function of Zone 1. The problem with 2 and 3 is that the forecast state estimates are totally different. It's not like if you move over a little bit from Zone 2 to Zone 3 the output is also shifted by the same nudge vector, it's completely different. 
+
+What this means is that different areas (and thus states) have different levels of forecast state uncertainty. For example, the border between Zone 2 and Zone 3 will have way more uncertainty than the area around Zone 1 with regards to where the next state will be.
+
+This is problematic, because over a walk (bumbling) of sufficient complexity, there can be cases where the robot may end up in a given position due to two different processes. One with lots of tweakage, one with little tweakage. This means that the current state may no longer encode which path the robot took to get there, thus the Markov property is violated. If the Markov property is violated, forecast state estimation based only on the current state is no longer possible, and thus neither is our algorithm from part 0.
+
+This is a problem indeed, and we now have a rationalization for why we'd want an EKF. 
 
 
 ### 1.2 EKF Core 
 
->The point of an Extended Kalman Filter (EKF) is to adapt state estimates as a function of prior state estimate uncertainty in order to allow adaptive linear approximation of nonlinear functions (i.e. the state transition function). Linear approximation of these functions allows the Markov property to be assumed. Satisfaction of the Markov property allows convergence of the SLAM solution via the algorithm given [here](./0-CoreAlgo/0-CoreAlgo.ipynb).
+Put simply, the whole point of an EKF is to encode state transition information in a way that allows the Markov property to be assumed, which is essential for our algorithm from [Part 0](./0-CoreAlgo/0-CoreAlgo.ipynb) to work. To do this, we make use of two key principles:
 
+1. Linearization allows the system to approximate nonlinear dynamics as locally linear.
 
+2. Locally linear models preserve the Markov property by ensuring that uncertainty propagation via covariance remains mathematically consistent. 
 
-It's important to note here that we are not 'enabling' the Markov property, but rather operating under it's assumption. For this assumption to hold, we have to linearize our nonlinear robot behaviour functions. This is difficult, and so we use a special filter that adapts its gain as a function of state estimate covariance (uncertainty). This is the EKF.
+This allows the EKF to encode the effects of nonlinear behavior through propagating uncertainty. What this means can be explained intuitively in the following example:
 
+### Figure 1.2.1: Path Comparison
+<p align="center">
+  <img src="./images/TweakSequence.png" width=700>
+</p>
 
-Some places will have higher state estimate covariance than others. For example, assuming Zone 1 is very far from all landmarks in our prior example, the overall state estimate covariance is quite low i.e. you could nudge the robot by a bit and the next place it ends up in is more or less going to be the same place shifted by that nudge vector. However, if you do the same thing at the border between zones 2 and 2, you'll get a totally different state change. The whole point of an EKF filter is to deal with this.
+>[!NOTE]
+> Tweak sequence is not to scale
+
+Let's say after k steps we are at a position (state, same thing) xk. For the sake of argument and simplicity, let's assume that at time period T=k, there are exactly two ways we could end up at this state:
+
+1. By following the completely nominal trajectory for all k steps (no tweakages)
+
+2. A most cantankerous tweak sequence (all tweakages after the first step)
+
+How do we differentiate the two? If we didn't have an EKF or some analogous method, we wouldn't be able to. But we do have an EKF, and so the differentiator lies in the Kalman Gain value of the filter at the end of both of these sequences. What is meant by this is that both sequences propagate different amounts of covariance (uncertainty) through the system at different times, the kalman filter tracks this uncertainty and adapts to it accordingly, thus each unique process is reflected through a different Kalman Gain value at time T=k. 
+
+This Kalman gain is then used to adapt our forecast estimates with regards to our observations (measurement update) in a manner that is compliant with the overarching SLAM algorithm delineated [here](./0-CoreAlgo/0-CoreAlgo.ipynb).
 
 
 This part of the document was intentionally kept very non-rigorous for much the same reasons as Part 0. The actual math behind what was described is elaborated on [here](./1-EKF/1-EKF.ipynb).
-
-
 
 
 
