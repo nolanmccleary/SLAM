@@ -114,13 +114,13 @@ To summarize, at any given point the robot will either:
 
 What follows from these questionable behaviour characteristics is the observation that within any given bumbling process of sufficient map complexity, the mappings between input and output deltas between those two locations will be decidedly non-uniform. To illustrate, consider the following zones:
 
->Zone 0: Known start point, will not tweak
->
->Zone 1: All landmarks far enough away, the robot will not tweak
->
->Zone 2: Same behaviour as Zone 1
->
->Zone 3: Right next to Zone 2 but one of the landmarks crosses threshold distance, the robot will tweak. 
+Zone 0: Known start point, will not tweak
+
+Zone 1: All landmarks far enough away, the robot will not tweak
+
+Zone 2: Same behaviour as Zone 1
+
+Zone 3: Right next to Zone 2 but one of the landmarks crosses threshold distance, the robot will tweak. 
 
 
 ### Figure 1.1.1: Conundrum of the Caffeinated Dorito
